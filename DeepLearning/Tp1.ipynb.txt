@@ -1,0 +1,590 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "TP_CNN.ipynb",
+      "provenance": [],
+      "collapsed_sections": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+    "accelerator": "GPU"
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# TP 1 : CNN\n",
+        "\n",
+        "Le but de ce TP sera de vous familiariser avec l'utilisation de TensorFlow et Keras pour la création et l'entraînement de modèles fully-connected puis à convolutions simples.\n",
+        "Vous entraînerez des modèles sur une tâche de classification sur les jeux de données MNIST.\n",
+        "Ces jeux de données sont composés d'images de dimensions 28x28 et ont l'avantage d'être très simples d'utilisation ainsi que de permettre un apprentissage rapide.\n",
+        "\n",
+        "Nous allons utiliser la librairie TensorFlow et faire tourner notre code sous Google Colab pour nos TP, ce qui aura l'avantage de nous permettre d'utiliser les GPUs mis à disposition gratuitement par Google.\n",
+        "Vous êtes libre d'utiliser une autre librairie que TensorFlow si vous en maîtrisez une autre ou votre machine personnelle si celle-ci possède un GPU suffisant, mais il est probable que les phases d'entraînement soit plus rapides sous Colab.\n",
+        "\n",
+        "N'hésitez pas à vous référer aux docs de TensorFlow 2 et Keras disponibles sur internet lors de ce TP.\n",
+        "\n",
+        "Ce TP s'effectue individuellement.\n",
+        "Veuillez respecter les consignes suivantes pour le rendu de votre travail :\n",
+        "\n",
+        "*   Renommez le selon le format suivant : \"TP_CNN_prenom_nom.ipynb\".\n",
+        "*   Veillez à ce que votre nom et prénom soient complétés dans la cellule ci-dessous.\n",
+        "*   Veillez à avoir bien exécuté toutes les cellules de code et que les résultats soient tous bien visible dans le notebook sans nécessiter une ré-exécution.\n",
+        "*   Partagez le notebook avec ranvier.thomas.pro@gmail.com.\n",
+        "\n",
+        "Si vous avez effectué le TP autrement que sur Google Colab :\n",
+        "\n",
+        "*   Renommez le selon le format suivant : \"TP_CNN_prenom_nom.ipynb\".\n",
+        "*   Téléchargez le fichier ipynb.\n",
+        "*   Envoyez le fichier en pièce-jointe à ranvier.thomas.pro@gmail.com, en indiquant en tant qu'objet : \"TP CNN prenom nom\".\n",
+        "\n",
+        "---"
+      ],
+      "metadata": {
+        "id": "taT5J8pabBJN"
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "## Veuillez compléter votre nom et prénom ci-dessous :\n",
+        "\n",
+        "*   **Prenom** : ...\n",
+        "*   **Nom** : ..."
+      ],
+      "metadata": {
+        "id": "u45C7pnjdkG_"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import tensorflow as tf\n",
+        "\n",
+        "# Si vous obtenez une erreur à ce niveau veuillez suivre ces indications :\n",
+        "# \"Modifier\" > \"Paramètres du notebook\" > \"Accélérateur matériel\" > \"GPU\"\n",
+        "device_name = tf.test.gpu_device_name()\n",
+        "if device_name != '/device:GPU:0':\n",
+        "    raise SystemError('GPU device not found')\n",
+        "print(f'Found GPU: {device_name}')"
+      ],
+      "metadata": {
+        "id": "Coqc5zujkJ04"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import matplotlib.pyplot as plt\n",
+        "%matplotlib inline"
+      ],
+      "metadata": {
+        "id": "eVax-HOKnT2a"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "---\n",
+        "# Preparation des données MNIST\n",
+        "\n",
+        "Vous allez utiliser le jeu de données MNIST qui contient des chiffres ayant été écrit à la main, le but va être de créer des réseaux de neurones qui vont apprendre à reconnaître et correctement classifier ces chiffres."
+      ],
+      "metadata": {
+        "id": "ivHQ5cvafFHI"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Load data\n",
+        "(x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()"
+      ],
+      "metadata": {
+        "id": "NpY9x2l4nU1J"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Il est important de toujours normaliser les données entre 0 et 1 pour qu'un réseau de neurones soit capable de les traiter convenablement.\n",
+        "\n",
+        "Normalisez les données entre 0 et 1"
+      ],
+      "metadata": {
+        "id": "UMymKubMyv2M"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Normalize data\n",
+        "x_train = ...\n",
+        "x_test = ..."
+      ],
+      "metadata": {
+        "id": "jk3o0lVXyvTX"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Ajoutez une dimension vide supplémentaire aux données, elle correspond à la dimension des channels dont les convolutions ont besoin.\n",
+        "\n",
+        "Par exemple, les dimensions de x_train sont (60000, 28, 28), elles doivent devenir (60000, 28, 28, 1)"
+      ],
+      "metadata": {
+        "id": "KddBt06Ey8Uf"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Add channel dimension\n",
+        "x_train = ...\n",
+        "x_test = ..."
+      ],
+      "metadata": {
+        "id": "KeBCwxhwzLJ0"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Séparez le jeu de données d'entraînement en un jeu de validation de taille 10000 et un nouveau jeu d'entraînement de taille 50000."
+      ],
+      "metadata": {
+        "id": "a9Ro1kfhzPPN"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Split train val\n",
+        "x_val, y_val = ...\n",
+        "x_train, y_train = ..."
+      ],
+      "metadata": {
+        "id": "pheu6793zQZU"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Si les traîtements effectués ci-dessus sur les données sont corrects l'execution de la cellule de code suivante devrait vous afficher les 25 premières images d'entraînement associées à leurs labels."
+      ],
+      "metadata": {
+        "id": "Q60Eoe3CyGIM"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Plot grid with first 25 training images with their corresponding label\n",
+        "plt.figure(figsize=(10, 10))\n",
+        "for i in range(25):\n",
+        "    plt.subplot(5, 5, i+1)\n",
+        "    plt.xticks([])\n",
+        "    plt.yticks([])\n",
+        "    plt.imshow(x_train[i].squeeze(), cmap='gray')\n",
+        "    plt.title(y_train[i])\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "iKP70UL_g2xd"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "---\n",
+        "# Préparation du Trainer\n",
+        "\n",
+        "Cette classe sera utilisé tout au long du TP pour entraîner les différents modèles à mettre en place.\n",
+        "Vous devrez compléter les parties utiles signifiées dans le code par les commentaires \"...\" au fur et à mesure que vous avancerez dans le TP.\n",
+        "Une description de ce que chaque méthode doit faire est écrit dans les docstrings de chaque méthode.\n",
+        "\n",
+        "Vous pourrez obtenir un bonus en implémentant un entraînement sur des mini-batches."
+      ],
+      "metadata": {
+        "id": "NWz7Fikf0b4E"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "class Trainer:\n",
+        "    def __init__(self, model, loss_function, optimizer):\n",
+        "        self._model = model\n",
+        "        self._loss_function = loss_function\n",
+        "        self._optimizer = optimizer\n",
+        "        # Metrics\n",
+        "        self._train_loss = tf.keras.metrics.Mean()\n",
+        "        self._val_loss = tf.keras.metrics.Mean()\n",
+        "        self._train_acc = tf.keras.metrics.SparseCategoricalAccuracy()\n",
+        "        self._val_acc = tf.keras.metrics.SparseCategoricalAccuracy()\n",
+        "        # History\n",
+        "        self._train_loss_h = []\n",
+        "        self._train_acc_h = []\n",
+        "        self._val_loss_h = []\n",
+        "        self._val_acc_h = []\n",
+        "    \n",
+        "    def fit(self, x_train, y_train, x_val, y_val, epochs, verbose=True):\n",
+        "        \"\"\"\n",
+        "        Cette méthode permet d'entraîner le modèle sur x_train et y_train pour\n",
+        "        un certain nombre d'epochs\n",
+        "        \"\"\"\n",
+        "        for epoch in range(epochs):\n",
+        "            # Reset metrics for each epoch\n",
+        "            self._train_loss.reset_states()\n",
+        "            self._train_acc.reset_states()\n",
+        "            self._val_acc.reset_states()\n",
+        "            self._val_loss.reset_states()\n",
+        "            # Train the model for one epoch\n",
+        "            # ...\n",
+        "            # Perform a validation step\n",
+        "            # ...\n",
+        "            # Update history\n",
+        "            self._train_loss_h.append(self._train_loss.result())\n",
+        "            self._train_acc_h.append(self._train_acc.result() * 100.)\n",
+        "            self._val_loss_h.append(self._val_loss.result())\n",
+        "            self._val_acc_h.append(self._val_acc.result() * 100.)\n",
+        "            if verbose:\n",
+        "                print((f'Epoch {epoch+1}/{epochs} - '\n",
+        "                       f'loss: {self._train_loss_h[-1]:.6f} - '\n",
+        "                       f'train acc: {self._train_acc_h[-1]:.2f}% - '\n",
+        "                       f'val acc: {self._val_acc_h[-1]:.2f}%'))\n",
+        "        \n",
+        "    def plot_history(self):\n",
+        "        plt.figure(figsize=(10,10))\n",
+        "        plt.subplot(2, 1, 1)\n",
+        "        plt.plot(self._train_loss_h, label='train')\n",
+        "        plt.plot(self._val_loss_h, label='val')\n",
+        "        plt.legend()\n",
+        "        plt.title('Loss')\n",
+        "        plt.subplot(2, 1, 2)\n",
+        "        plt.plot(self._train_acc_h, label='train')\n",
+        "        plt.plot(self._val_acc_h, label='val')\n",
+        "        plt.legend()\n",
+        "        plt.title('Acc')\n",
+        "        plt.show()\n",
+        "\n",
+        "    def predict(self, x_test):\n",
+        "        \"\"\"\n",
+        "        Cette méthode doit retourner les prédiction du modèle pour les données \n",
+        "        x_test\n",
+        "        \"\"\"\n",
+        "        # ...\n",
+        "        pass\n",
+        "        \n",
+        "    @tf.function\n",
+        "    def _train_step(self, x, y):\n",
+        "        \"\"\"\n",
+        "        Cette méthode doit performer une étape d'entrainement, c'est à dire :\n",
+        "            - Feed forward de x dans le modèle\n",
+        "            - Calcul de la loss entre y et les prédictions du modèle\n",
+        "            - Mise à jour des métriques self._train_acc et self._train_loss,\n",
+        "              cf https://keras.io/api/metrics/\n",
+        "            - Calcul du gradient\n",
+        "            - Application du gradient par l'optimizer\n",
+        "        \"\"\"\n",
+        "        # ...\n",
+        "        pass\n",
+        "\n",
+        "    @tf.function\n",
+        "    def _eval_step(self, x, y):\n",
+        "        \"\"\"\n",
+        "        Cette méthode doit performer une étape de validation :\n",
+        "            - Feed forward de x dans le modèle\n",
+        "            - Calcul de la loss entre y et les prédictions du modèle\n",
+        "            - Mise à jour des métriques self._val_acc et self._val_loss,\n",
+        "              cf https://keras.io/api/metrics/\n",
+        "        \"\"\"\n",
+        "        # ...\n",
+        "        pass"
+      ],
+      "metadata": {
+        "id": "zUg5K_2tqXgA"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "---\n",
+        "# Entraîner un modèle fully-connected sur les données MNIST\n",
+        "\n",
+        "Vous devez définir un modèle fully-connected, ainsi que les hyper-paramètres que le modèle utilisera lors de son apprentissage.\n",
+        "Cherchez la meilleure architecture et les meilleurs paramètres possibles de manière empirique en testant différentes choses.\n",
+        "Reportez vous à la documentation Keras https://keras.io/api/ pour connaître les différentes fonctionnalités utilisables ainsi que les paramètres qu'il est possible de modifier pour chaque.\n",
+        "\n",
+        "L'objectif ici est d'obtenir une accuracy d'au minimum 96% sur le jeu de test."
+      ],
+      "metadata": {
+        "id": "yfBDUtaJgwKH"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Define model, for a fully-connected network the input must be properly adapted\n",
+        "model = tf.keras.Sequential([\n",
+        "            tf.keras.layers.Flatten(),\n",
+        "            ...\n",
+        "        ])\n",
+        "\n",
+        "# Set hyperparameters\n",
+        "loss_function = ...\n",
+        "optimizer = ...\n",
+        "epochs = ...\n",
+        "\n",
+        "# Initialize trainer\n",
+        "mnist_fc_trainer = Trainer(model=model,\n",
+        "                           loss_function=loss_function,\n",
+        "                           optimizer=optimizer)\n",
+        "\n",
+        "# Train model\n",
+        "mnist_fc_trainer.fit(x_train, y_train, x_val, y_val, epochs)\n",
+        "\n",
+        "# Plot training history\n",
+        "mnist_fc_trainer.plot_history()\n",
+        "\n",
+        "# Evaluate on test set\n",
+        "test_acc = tf.keras.metrics.SparseCategoricalAccuracy(name='test_acc')\n",
+        "predictions = mnist_fc_trainer.predict(x_test)\n",
+        "test_acc(y_test, predictions)\n",
+        "print(f'Test accuracy: {test_acc.result()*100.:.2f}%')"
+      ],
+      "metadata": {
+        "id": "bqXpZTtDuKNv"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "---\n",
+        "# Entraîner un modèle à convolutions sur les données MNIST\n",
+        "\n",
+        "Vous devez définir un CNN, ainsi que les hyper-paramètres que le modèle utilisera lors de son apprentissage.\n",
+        "Cherchez la meilleure architecture et les meilleurs paramètres possibles de manière empirique en testant différentes choses.\n",
+        "Reportez vous à la documentation Keras https://keras.io/api/ pour connaître les différentes fonctionnalités utilisables ainsi que les paramètres qu'il est possible de modifier pour chaque.\n",
+        "\n",
+        "L'objectif ici est d'obtenir une accuracy d'au minimum 98% sur le jeu de test.\n",
+        "\n",
+        "Vous pourrez obtenir un bonus en ajoutant aux endroits opportuns dans l'architecture du modèle une ou des batch-normalizations, et un ou des dropouts."
+      ],
+      "metadata": {
+        "id": "sUgo1zwB2rlb"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Define model\n",
+        "model = ...\n",
+        "\n",
+        "# Set hyperparameters\n",
+        "loss_function = ...\n",
+        "optimizer = ...\n",
+        "epochs = ...\n",
+        "\n",
+        "# Initialize trainer\n",
+        "mnist_cnn_trainer = Trainer(model=model,\n",
+        "                            loss_function=loss_function,\n",
+        "                            optimizer=optimizer)\n",
+        "\n",
+        "# Train model\n",
+        "mnist_cnn_trainer.fit(x_train, y_train, x_val, y_val, epochs)\n",
+        "\n",
+        "# Plot training history\n",
+        "mnist_cnn_trainer.plot_history()\n",
+        "\n",
+        "# Evaluate on test set\n",
+        "test_acc = tf.keras.metrics.SparseCategoricalAccuracy(name='test_acc')\n",
+        "predictions = mnist_cnn_trainer.predict(x_test)\n",
+        "test_acc(y_test, predictions)\n",
+        "print(f'Test accuracy: {test_acc.result()*100.:.2f}%')"
+      ],
+      "metadata": {
+        "id": "8WpHNsTkkUxk"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "---\n",
+        "# Préparation des données Fashion MNIST\n",
+        "\n",
+        "Vous allez utiliser le jeu de données Fashion MNIST qui contient des images de vétements, le but va être de créer des réseaux de neurones qui vont apprendre à reconnaître et correctement classifier les images.\n",
+        "\n",
+        "Vous devez définir un CNN, ainsi que les hyper-paramètres que le modèle utilisera lors de son apprentissage.\n",
+        "Cherchez la meilleure architecture et les meilleurs paramètres possibles de manière empirique en testant différentes choses.\n",
+        "Reportez vous à la documentation Keras https://keras.io/api/ pour connaître les différentes fonctionnalités utilisables ainsi que les paramètres qu'il est possible de modifier pour chaque.\n",
+        "\n",
+        "L'objectif ici est d'obtenir une accuracy d'au minimum 90% sur le jeu de test.\n",
+        "\n",
+        "Vous pourrez obtenir un bonus en ajoutant aux endroits opportuns dans l'architecture du modèle une ou des batch-normalizations, et un ou des dropouts.\n"
+      ],
+      "metadata": {
+        "id": "xDHsFYdoAYJF"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Load data\n",
+        "(x_train, y_train), (x_test, y_test) = tf.keras.datasets.fashion_mnist.load_data()\n",
+        "class_names = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat',\n",
+        "               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']\n",
+        "# Normalize data\n",
+        "...\n",
+        "# Add channel dimension to MNIST data\n",
+        "...\n",
+        "# Split train val\n",
+        "..."
+      ],
+      "metadata": {
+        "id": "Mv4dCJK1AcUd"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Plot grid with first 25 training images with their corresponding label\n",
+        "plt.figure(figsize=(10,10))\n",
+        "for i in range(25):\n",
+        "    plt.subplot(5, 5, i+1)\n",
+        "    plt.xticks([])\n",
+        "    plt.yticks([])\n",
+        "    plt.imshow(x_train[i].squeeze(), cmap='gray')\n",
+        "    plt.title(class_names[y_train[i]])\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "GgLmiKBeBEBQ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Define model\n",
+        "model = ...\n",
+        "\n",
+        "# Set hyperparameters\n",
+        "loss_function = ...\n",
+        "optimizer = ...\n",
+        "epochs = ...\n",
+        "\n",
+        "# Initialize trainer\n",
+        "fashion_cnn_trainer = Trainer(model=model,\n",
+        "                              loss_function=loss_function,\n",
+        "                              optimizer=optimizer)\n",
+        "\n",
+        "# Train model\n",
+        "fashion_cnn_trainer.fit(x_train, y_train, x_val, y_val, epochs)\n",
+        "\n",
+        "# Plot training history\n",
+        "fashion_cnn_trainer.plot_history()\n",
+        "\n",
+        "# Evaluate on test set\n",
+        "test_acc = tf.keras.metrics.SparseCategoricalAccuracy(name='test_acc')\n",
+        "predictions = fashion_cnn_trainer.predict(x_test)\n",
+        "test_acc(y_test, predictions)\n",
+        "print(f'Test accuracy: {test_acc.result()*100.:.2f}%')"
+      ],
+      "metadata": {
+        "id": "KnvRhFQ0BJHd"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Si l'apprentissage ci-dessus s'est bien passé l'executions des 2 cellules de code suivantes devraient vous afficher respectivement les 25 premières images de test avec le label prédit et le label réel pour chaque et les 40 premières images de test avec les probabilités émisent par le modèle pour chacune des classes."
+      ],
+      "metadata": {
+        "id": "hjCHZkauywyb"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Plot grid with first 25 test images with their predicted and true label\n",
+        "plt.figure(figsize=(10,10))\n",
+        "for i in range(25):\n",
+        "    plt.subplot(5, 5, i+1)\n",
+        "    plt.xticks([])\n",
+        "    plt.yticks([])\n",
+        "    plt.imshow(x_test[i].squeeze(), cmap='gray')\n",
+        "    pred = predictions[i].numpy().argmax()\n",
+        "    true = y_test[i]\n",
+        "    color = 'green' if pred == true else 'red'\n",
+        "    plt.title(f'{class_names[pred]} | {class_names[true]}', color=color)\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "Q0zjfPMBkU12"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Plot grid with first 40 test images with the model probabilities\n",
+        "plt.figure(figsize=(20, 16))\n",
+        "for i in range(40):\n",
+        "    plt.subplot(8, 10, (i*2)+1)\n",
+        "    plt.xticks([])\n",
+        "    plt.yticks([])\n",
+        "    plt.imshow(x_test[i].squeeze(), cmap='gray')\n",
+        "    pred = predictions[i].numpy().argmax()\n",
+        "    true = y_test[i]\n",
+        "    color = 'green' if pred == true else 'red'\n",
+        "    plt.title(f'{class_names[pred]} | {class_names[true]}', color=color)\n",
+        "    plt.subplot(8, 10, (i*2)+2)\n",
+        "    barplt = plt.bar(list(range(len(class_names))), predictions[i].numpy(),\n",
+        "                     color='gray')\n",
+        "    barplt[pred].set_color('red')\n",
+        "    barplt[true].set_color('blue')\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "6zh2_K3iSjmm"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
